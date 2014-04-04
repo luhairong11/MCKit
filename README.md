@@ -1,0 +1,4 @@
+mckit
+=====
+
+Matrix Completion library
