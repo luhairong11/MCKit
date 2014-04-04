@@ -1,0 +1,193 @@
+\documentclass{article}
+
+\usepackage[colorlinks=true]{hyperref}
+\usepackage[cmex10]{amsmath}
+\usepackage{bbm}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{comment}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multirow}
+
+\DeclareMathOperator*{\argmin}{\mathrm{argmin}}
+\DeclareMathOperator*{\pro}{\mathcal P_{\Omega}}
+\DeclareMathOperator*{\pron}{\mathcal P_{\bar{\Omega}}}
+\newcommand{\BigO}[1]{\ensuremath{\operatorname{O}\left(#1\right)}}
+
+\begin{document}
+
+\title{MC-Kit Manual}
+\author{Stephen Tierney}
+\maketitle
+
+\section{Introduction}
+
+The problem of Matrix Completion (MC) is to recover a matrix $\mathbf A$ from only a small sample of its entries. Let $\mathbf A \in \mathbb R^{m \times n}$  be the matrix we would like to know as precisely as possible while only observing a subset of its entries $(i, j) \in \Omega$. It is assumed that observed entries in $\Omega$ are uniform randomly sampled. Low-Rank Matrix Completion is a variant that assumes that $\mathbf A$ is low-rank. The tolerance for ``low'' is dependant upon the size of $\mathbf A$ and the number of sampled entries. 
+
+For further explanation let us define the sampling operator $\pro : \mathbb R^{m \times n} \rightarrow \mathbb R^{m \times n}$ as
+\begin{align}
+[ \pro  ( X ) ]_{ij} = \left\{
+\begin{array}{ll}
+X_{ij}, &(i, j) \in \Omega,\\
+0, &\text{otherwise}.
+\end{array}
+\right.
+\end{align}
+We also define the opposite operator $\pron$, which keeps those outside $\Omega$ unchanged and sets values inside $\Omega$ (i.e. $\bar{\Omega}$) to $0$. Since we assume that the matrix to recover is low-rank, one could recover the unknown matrix by solving
+\begin{align}
+\min_{\mathbf A} \; \text{rank}(\mathbf A)\\
+\text{s.t.} \; \pro  (\mathbf A) = \pro (\mathbf M) \nonumber 
+\end{align}
+where matrix $\mathbf M$ is the partially observed matrix. In practice this problem is intractable therefore we use the closest convex relaxation i.e. the nuclear norm
+\begin{align}
+\min_{\mathbf A} \; \tau \| \mathbf A \|_* \\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \nonumber 
+\end{align}
+We also consider the case where our observed entries may contain a limited amount of noise. Our corresponding objective is the following
+\begin{align}
+\min_{\mathbf A} \; \tau \| \mathbf A \|_* + \frac{\lambda}{2} \| \pro (\mathbf E) \|_F^2\\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) + \pro (\mathbf E) \nonumber 
+\end{align}
+
+\section{Singular Value Shrinkage Operator}
+
+Central to this work is the {\bf{singular value shrinkage operator}}. Consider the singular value decomposition (SVD) of a matrix $\mathbf Y \in \mathbb R^{m \times n}$ with rank $r$
+\begin{align}
+\mathbf Y = \mathbf{U \Sigma V^T}, \;\; \mathbf \Sigma = \text{diag}(\{\sigma_i\}_{i=1}^r).
+\end{align}
+Then we define the singular value shrinkage operator for any $\tau \geq 0$ as
+\begin{align}
+\mathcal D_{\tau}(\mathbf Y) = \mathbf U S_{\tau}(\mathbf \Sigma) \mathbf V^T, \;\; S_{\rho}(\mathbf \Sigma) = \text{diag}(\{\text{max}(\sigma_i - \tau, 0)\}).
+\end{align}
+It has been shown \cite{cai2010singular} that the operator $\mathcal D_{\tau}(\mathbf Y)$ is the solution to the proximal nuclear norm problem i.e.
+\begin{align}
+\mathcal D_{\tau}(\mathbf Y) = \argmin_{\mathbf X} \; \tau \| \mathbf X \|_* + \frac{1}{2} \| \mathbf{X - Y} \|_F^2
+\end{align}
+The implementation of the singular value singular shrinkage operator is implemented by the function $[ \mathbf X, \mathbf s ] = \text{nn\_prox}( \mathbf Y, \tau )$, where $\mathbf s$ is the vector of the singular values of $\mathbf X$.
+
+\section{Function Listing}
+
+\begin{table}[!h]
+{\small{
+\centering
+
+\begin{tabular}{c | c | c}
+\hline
+Problem & Implementation & Section \\
+\hline
+
+$\begin{array}{c} \min_{\mathbf A} \; \tau \| \mathbf A \|_* +  \frac{1}{2} \| \mathbf{ A } \|_F^2 \\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \end{array}$ & Singular Value Thresholding (SVT)	& 4.1  \\
+\hline
+
+\multirow{2}{*}{$\begin{array}{c} \min_{\mathbf A} \; \tau \| \mathbf A \|_* \\ \text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \end{array}$} & Inexact ALM 	& 4.2 \\
+		& Linearised ALM	& 4.3 \\
+\hline
+$\begin{array}{c} \min_{\mathbf A} \; \tau \| \mathbf A \|_* + \frac{\lambda}{2} \| \pro (\mathbf E) \|_F^2 \\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) + \pro (\mathbf E)\end{array}$ & Linearised ALM & 5.1 \\
+		
+\end{tabular}
+}}
+\end{table}
+
+\newpage
+\section{Noise-Free Implementations}
+
+\subsection{SVT}
+
+The function
+\begin{align}
+[ \mathbf A, \mathbf{f\_values}, \mathbf{stop\_vals} ] = \text{solve\_svt}( \mathbf M, \tau, \mu, iterations, tol )
+\end{align}
+solves the following
+\begin{align}
+\min_{\mathbf A} \; \tau \| \mathbf A \|_* +  \frac{1}{2} \| \mathbf{ A } \|_F^2 \\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \nonumber 
+\end{align}\
+as proposed by the authors of \cite{cai2010singular}.
+
+\begin{itemize}
+\item $\mathbf M$ - matrix with observed entries and zeros for all others
+\item $\tau$ - regularisation (optional)
+\item $\mu$ - step size (optional)
+\item $iterations$ - maximum number of iterations (optional)
+\item $tol$ - stopping criteria tolerance (optional)
+\end{itemize}
+
+\subsection{Inexact ALM}
+
+The function
+\begin{align}
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_ialm}( \mathbf M, \tau, \mu, iterations, tol )
+\end{align}
+solves the following
+\begin{align}
+\min_{\mathbf A} \; \tau \| \mathbf A \|_* \\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \nonumber 
+\end{align}
+as proposed by the authors of \cite{lin2010augmented}.
+
+\begin{itemize}
+\item $\mathbf M$ - matrix with observed entries and zeros for all others
+\item $\tau$ - regularisation (optional)
+\item $\mu$ - step size (optional)
+\item $iterations$ - maximum number of iterations (optional)
+\item $tol$ - stopping criteria tolerance (optional)
+\end{itemize}
+
+\subsection{Linearised ALM}
+
+The function
+\begin{align}
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_lin\_alm}( \mathbf M, \tau, \mu, \rho, iterations, tol )
+\end{align}
+solves the following
+\begin{align}
+\min_{\mathbf A} \; \tau \| \mathbf A \|_* \\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \nonumber 
+\end{align}
+
+\begin{itemize}
+\item $\mathbf M$ - matrix with observed entries and zeros for all others
+\item $\tau$ - regularisation (optional)
+\item $\mu$ - step size (optional)
+\item $\rho$ - linearisation step size (optional)
+\item $iterations$ - maximum number of iterations (optional)
+\item $tol$ - stopping criteria tolerance (optional)
+\end{itemize}
+
+\newpage
+\section{Noise Inclusive Implemetations}
+
+\subsection{Linearised ALM}
+
+The functions
+\begin{align}
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_e\_lin\_alm}( \mathbf M, \tau, \lambda, \rho, iterations, tol ) \\
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_e\_lin\_extalm}( \mathbf M, \tau, \lambda, \rho, iterations, tol ) \\
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_e\_lin\_extalm}( \mathbf M, \tau, \lambda, \rho, iterations, tol )
+\end{align}
+solve the following
+\begin{align}
+\min_{\mathbf A} \; \tau \| \mathbf A \|_* + \frac{\lambda}{2} \| \pro (\mathbf E) \|_F^2\\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) + \pro (\mathbf E) \nonumber 
+\end{align}
+with increasing convergence speed based on \cite{ji2009accelerated}.
+
+\begin{itemize}
+\item $\mathbf M$ - matrix with observed entries and zeros for all others
+\item $\tau$ - regularisation (optional)
+\item $\lambda$ - regularisation (optional)
+\item $\rho$ - linearisation step size (optional)
+\item $iterations$ - maximum number of iterations (optional)
+\item $tol$ - stopping criteria tolerance (optional)
+\end{itemize}
+
+\newpage
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
