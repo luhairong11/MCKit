@@ -1,5 +1,5 @@
 function [ A, f_vals ] = solve_lin_alm(M, tau, mu, rho, iterations, tol)
-%SOLVE_SUB_GRAD
+%SOLVE_LIN_ALM
 %   This function solves the following problem
 %   
 %   min_A    tau * | A |_* 

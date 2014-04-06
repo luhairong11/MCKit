@@ -1,5 +1,5 @@
 function [ A, f_vals ] = solve_e_lin_alm(M, tau, lambda, rho, iterations, tol)
-%SOLVE_SUB_GRAD
+%SOLVE_E_LIN_ALM
 %   This function solves the following problem
 %   
 %   min_A    tau * | A |_* + lambda/2 | P.*E |_F^2 

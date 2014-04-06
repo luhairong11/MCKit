@@ -1,6 +1,12 @@
 function [ X, s ] = nn_prox( Y, tau )
 %NN_PROX
-%   min lamYda*|X|_* + 1/2*|X - Y|^2
+%   This function solves the proximal nuclear norm problem
+% 
+%   min lambda * |X|_* + 1/2*|X - Y|^2
+%
+%   solved by singular value thresholding
+% 
+%   Written by Stephen Tierney
 
 [U, S, V] = svd(Y);
 

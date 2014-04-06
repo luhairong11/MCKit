@@ -1,5 +1,5 @@
 function [ A, f_vals, stop_vals ] = solve_ialm( M, tau, mu, iterations, tol )
-%SOLVE_ALM
+%SOLVE_IALM
 %   This function solves the following problem
 %   
 %   min_A    tau * | A |_*
