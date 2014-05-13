@@ -17,4 +17,4 @@ omega = randsample(n1*n2,m);
 M = zeros(size(A));
 M(omega) = A(omega);
 
-[X, f_vals] = solve_lin_alm(M);
+[X, f_vals] = solve_lin_alm(M, omega);

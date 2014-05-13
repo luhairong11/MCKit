@@ -18,4 +18,4 @@ M = zeros(size(A));
 M(omega) = A(omega);
 
 
-[X, f_vals] = solve_e_lin_extalm(M);
+[X, f_vals] = solve_e_lin_extalm(M, omega);
