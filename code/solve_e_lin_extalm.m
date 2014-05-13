@@ -1,4 +1,4 @@
-function [ A, f_vals ] = solve_e_lin_extalm(M, tau, lambda, rho, iterations, tol)
+function [ A, f_vals ] = solve_e_lin_extalm(M, omega, tau, lambda, rho, iterations, tol)
 %SOLVE_E_LIN_EXTALM
 %   This function solves the following problem
 %   
@@ -12,6 +12,10 @@ function [ A, f_vals ] = solve_e_lin_extalm(M, tau, lambda, rho, iterations, tol
 %   solved by extended gradient descent
 % 
 %   Written by Stephen Tierney
+
+if ~exist('omega', 'var')
+    error('Aborted: no observation set provided.');
+end
 
 if ~exist('tau', 'var')
     tau = 10;
@@ -37,8 +41,6 @@ gamma = 1.1;
 
 f_vals = zeros(iterations, 1);
 last_f_value = Inf;
-
-omega = find(M);
 
 P = zeros(size(M));
 P(omega) = 1;

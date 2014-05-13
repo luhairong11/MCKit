@@ -1,4 +1,4 @@
-function [ A, f_vals, stop_vals ] = solve_ialm( M, tau, mu, iterations, tol )
+function [ A, f_vals, stop_vals ] = solve_ialm(M, omega, tau, mu, iterations, tol )
 %SOLVE_IALM
 %   This function solves the following problem
 %   
@@ -13,6 +13,10 @@ function [ A, f_vals, stop_vals ] = solve_ialm( M, tau, mu, iterations, tol )
 %   by Zhouchen Lin, Minming Chen, Yi Ma
 % 
 %   Written by Stephen Tierney
+
+if ~exist('omega', 'var')
+    error('Aborted: no observation set provided.');
+end
 
 if ~exist('mu', 'var')
 %     mu = 1/norm(M, 2);
@@ -33,8 +37,6 @@ end
 
 f_vals = zeros(iterations, 1);
 stop_vals = zeros(iterations, 2);
-
-omega = find(M);
 
 P = zeros(size(M));
 P(omega) = 1;

@@ -1,4 +1,4 @@
-function [ A, f_vals ] = solve_e_lin_alm(M, tau, lambda, rho, iterations, tol)
+function [ A, f_vals ] = solve_e_lin_alm(M, omega, tau, lambda, rho, iterations, tol)
 %SOLVE_E_LIN_ALM
 %   This function solves the following problem
 %   
@@ -12,6 +12,10 @@ function [ A, f_vals ] = solve_e_lin_alm(M, tau, lambda, rho, iterations, tol)
 %   solved by basic subgradient descent
 % 
 %   Written by Stephen Tierney
+
+if ~exist('omega', 'var')
+    error('Aborted: no observation set provided.');
+end
 
 if ~exist('tau', 'var')
     tau = 10;
@@ -35,8 +39,6 @@ end
 
 f_vals = zeros(iterations, 1);
 last_f_value = Inf;
-
-omega = find(M);
 
 P = zeros(size(M));
 P(omega) = 1;

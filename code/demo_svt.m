@@ -17,4 +17,4 @@ omega = randsample(n1*n2,m);
 M = zeros(size(A));
 M(omega) = A(omega);
 
-[X, f_val, stop_val] = solve_svt(M);
+[X, f_val, stop_val] = solve_svt(M, omega);
