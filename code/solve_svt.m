@@ -1,4 +1,4 @@
-function [ A, f_values, stop_vals ] = solve_svt( M, tau, mu, iterations, tol )
+function [ A, f_values, stop_vals ] = solve_svt( M, omega, tau, mu, iterations, tol )
 %SOLVE_SVT
 %   This function solves the following problem
 %   
@@ -10,6 +10,10 @@ function [ A, f_values, stop_vals ] = solve_svt( M, tau, mu, iterations, tol )
 %   by Cai, Candes and Shen
 % 
 %   Written by Stephen Tierney
+
+if ~exist('omega', 'var')
+    error('Aborted: no observation set provided.');
+end
 
 [m, n] = size(M);
 
@@ -34,8 +38,6 @@ f_values = zeros(iterations, 1);
 stop_vals = zeros(iterations, 1);
 
 Y = M;
-
-omega = find(M);
 
 P = zeros(size(M));
 P(omega) = 1;
