@@ -1,13 +1,13 @@
-function [ A, f_vals ] = solve_lin(M, omega, tau, mu, rho, iterations, tol)
-%SOLVE_LIN
+function [ A, f_vals ] = solve_e_exact(M, omega, tau, lambda, rho, iterations, tol)
+%SOLVE_E_LIN
 %   This function solves the following problem
 %   
-%   min_A    tau * | A |_* 
+%   min_A    tau * | A |_* + lambda/2 | P.*E |_F^2 
 %   s.t. P.*M = P.*A + P.*E
 % 
 %   which we convert to the unconstrained problem
 % 
-%   min_A   tau * | A |_* + < Y, P.*A - P.*M > + mu/2 | P.*A - P.*M |_F^2
+%   min_A   tau * | A |_* + lambda/2 | P.*A - P.*M |_F^2
 % 
 %   solved by basic subgradient descent
 % 
@@ -25,8 +25,8 @@ if ~exist('tau', 'var')
     tau = 10;
 end
 
-if ~exist('mu', 'var')
-    mu = 1;
+if ~exist('lambda', 'var')
+    lambda = 1;
 end
 
 if ~exist('rho', 'var')
@@ -48,22 +48,32 @@ P = zeros(size(M));
 P(omega) = 1;
 
 A = zeros(size(M));
+E = zeros(size(M));
 Y = zeros(size(M));
+
+mu = 1;
 
 for k = 1 : iterations
     
-    %% Take a step
-    partial = mu * (P.*A - (P.*M - 1/mu * Y));
+    % Update A
+    partial = mu * (P.*A + P.*E - P.*M + 1/mu * Y);
     
     V = A - 1/rho * partial;
     
     [A, s] = solve_nn(V, tau/rho);
     
-    %% Step 2, update Y
-    Y = Y + mu * (P.*A - P.*M);
+    % Update E
+    
+    V = (P.*A - P.*M + 1/mu * Y);
+    
+    E = solve_l2(V, lambda/mu);
+    
+    % Update Y
+    
+    Y = Y + mu*(P.*A + P.*E - P.*M);
     
     %% Check function value
-    f_vals(k, 1) = tau * sum(s);
+    f_vals(k, 1) = tau * sum(s) + lambda/2 * norm(P.*E, 'fro')^2;
     
     if (abs(last_f_value -  f_vals(k, 1)) <= tol)
         break;

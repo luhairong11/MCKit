@@ -1,4 +1,4 @@
-function [ X, s ] = nn_prox( Y, tau )
+function [ X, s ] = solve_nn( Y, tau )
 %NN_PROX
 %   This function solves the proximal nuclear norm problem
 % 

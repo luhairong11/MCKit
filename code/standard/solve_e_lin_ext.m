@@ -61,7 +61,7 @@ for k = 1 : iterations
         partial = lambda * (P.*A_prev - P.*M);
         V = A_prev - 1/rho * partial;
         
-        [A, s] = nn_prox(V, tau/rho);
+        [A, s] = solve_nn(V, tau/rho);
         
         f_vals(k, 1) = tau * sum(s) + lambda/2 * norm(P.*A - P.*M, 'fro')^2;
         
