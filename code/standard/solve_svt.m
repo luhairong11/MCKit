@@ -11,8 +11,12 @@ function [ A, f_values, stop_vals ] = solve_svt( M, omega, tau, mu, iterations, 
 % 
 %   Written by Stephen Tierney
 
+if ~exist('M', 'var')
+    error('No observation data provided.');
+end
+
 if ~exist('omega', 'var')
-    error('Aborted: no observation set provided.');
+    error('No observation set provided.');
 end
 
 [m, n] = size(M);
@@ -48,13 +52,13 @@ for k = 1 : iterations
     [A, s] = nn_prox(Y, tau);
 
     %% Step 2, update Y
-    Y = Y + mu * (M - P.*A);
+    Y = Y + mu * (P.*M - P.*A);
         
     %% Get function value
     f_values(k, 1) = tau * sum(s) + .5*norm(A,'fro');
     
     %% Check stopping criteria
-    stop_vals(k, 1) = norm(P.*A - M, 'fro') / norm(M, 'fro');
+    stop_vals(k, 1) = norm(P.*A - P.*M, 'fro') / norm(M, 'fro');
     
     if ( stop_vals(k, 1) <= tol)
         break;

@@ -1,28 +1,32 @@
-function [ A, f_vals ] = solve_lin_alm(M, omega, tau, mu, rho, iterations, tol)
-%SOLVE_LIN_ALM
+function [ A, f_vals ] = solve_e_lin(M, omega, tau, lambda, rho, iterations, tol)
+%SOLVE_E_LIN
 %   This function solves the following problem
 %   
-%   min_A    tau * | A |_* 
+%   min_A    tau * | A |_* + lambda/2 | P.*E |_F^2 
 %   s.t. P.*M = P.*A + P.*E
 % 
 %   which we convert to the unconstrained problem
 % 
-%   min_A   tau * | A |_* + < Y, P.*A - P.*M > + mu/2 | P.*A - P.*M |_F^2
+%   min_A   tau * | A |_* + lambda/2 | P.*A - P.*M |_F^2
 % 
 %   solved by basic subgradient descent
 % 
 %   Written by Stephen Tierney
 
+if ~exist('M', 'var')
+    error('No observation data provided.');
+end
+
 if ~exist('omega', 'var')
-    error('Aborted: no observation set provided.');
+    error('No observation set provided.');
 end
 
 if ~exist('tau', 'var')
     tau = 10;
 end
 
-if ~exist('mu', 'var')
-    mu = 1;
+if ~exist('lambda', 'var')
+    lambda = 1;
 end
 
 if ~exist('rho', 'var')
@@ -44,22 +48,18 @@ P = zeros(size(M));
 P(omega) = 1;
 
 A = zeros(size(M));
-Y = zeros(size(M));
 
 for k = 1 : iterations
     
     %% Take a step
-    partial = mu * (P.*A - (M - 1/mu * Y));
+    partial = lambda * (P.*A - P.*M);
     
-    B = A - 1/rho * partial;
+    V = A - 1/rho * partial;
     
-    [A, s] = nn_prox(B, tau/rho);
-    
-    %% Step 2, update Y
-    Y = Y + mu * (P.*A - M);
+    [A, s] = nn_prox(V, tau/rho);
     
     %% Check function value
-    f_vals(k, 1) = tau * sum(s);
+    f_vals(k, 1) = tau * sum(s) + lambda/2 * norm(P.*A - P.*M, 'fro')^2;
     
     if (abs(last_f_value -  f_vals(k, 1)) <= tol)
         break;

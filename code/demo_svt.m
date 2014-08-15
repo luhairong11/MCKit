@@ -1,20 +1,23 @@
-n1 = 150;
-n2 = 300;
-r = 10;
+paths = [genpath('common'), genpath('standard')];
+addpath(paths);
 
-randn('state',2009);
-rand('state',2009);
+rng(1);
 
-A = randn(n1,r) * randn(r,n2);
+n = 150;
+n_blocks = 3;
 
-df = r*(n1+n2-r);
+A = get_block_diag(n, n_blocks);
+
+df = n_blocks*(n + n - n_blocks);
 
 oversampling = 5;
-m = min(5*df,round(.99*n1*n2));
+m = min(5*df,round(.99*n*n));
 
-omega = randsample(n1*n2,m);
+omega = randsample(n*n, m);
 
 M = zeros(size(A));
 M(omega) = A(omega);
 
 [X, f_val, stop_val] = solve_svt(M, omega);
+
+rmpath(paths);

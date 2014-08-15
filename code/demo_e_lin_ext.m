@@ -15,9 +15,15 @@ m = min(5*df,round(.99*n*n));
 
 omega = randsample(n*n, m);
 
-M = zeros(size(A));
-M(omega) = A(omega);
+A_noisey = A + (0.05 * randn(size(A)));
 
-[X, f_val, stop_val] = solve_ialm(M, omega);
+M = zeros(size(A));
+M(omega) = A_noisey(omega);
+
+tic; [X, f_vals] = solve_e_lin_ext(M, omega, 3, 1.5); toc;
 
 rmpath(paths);
+
+figure, imagesc(A_noisey);
+figure, imagesc(M);
+figure, imagesc(X);

@@ -1,5 +1,5 @@
-function [ A, f_vals ] = solve_e_lin_extalm(M, omega, tau, lambda, rho, iterations, tol)
-%SOLVE_E_LIN_EXTALM
+function [ A, f_vals ] = solve_e_lin_ext(M, omega, tau, lambda, rho, iterations, tol)
+%SOLVE_E_LIN_EXT
 %   This function solves the following problem
 %   
 %   min_A    tau * | A |_* + lambda/2 | P.*E |_F^2 
@@ -13,8 +13,12 @@ function [ A, f_vals ] = solve_e_lin_extalm(M, omega, tau, lambda, rho, iteratio
 % 
 %   Written by Stephen Tierney
 
+if ~exist('M', 'var')
+    error('No observation data provided.');
+end
+
 if ~exist('omega', 'var')
-    error('Aborted: no observation set provided.');
+    error('No observation set provided.');
 end
 
 if ~exist('tau', 'var')
@@ -49,14 +53,17 @@ A = zeros(size(M));
 
 for k = 1 : iterations
     
+    A_prev = A;
+    
     searching = true;
     while( searching )
         
-        partial = lambda * (P.*A - M);
-        V = A - 1/rho * partial;
+        partial = lambda * (P.*A_prev - P.*M);
+        V = A_prev - 1/rho * partial;
+        
         [A, s] = nn_prox(V, tau/rho);
         
-        f_vals(k, 1) = tau * sum(s) + lambda/2 * norm(P.*A - M, 'fro')^2;
+        f_vals(k, 1) = tau * sum(s) + lambda/2 * norm(P.*A - P.*M, 'fro')^2;
         
         approx = tau * sum(s) + rho/2 * norm(A - V, 'fro')^2;
         

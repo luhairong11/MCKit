@@ -15,6 +15,7 @@
 \DeclareMathOperator*{\argmin}{\mathrm{argmin}}
 \DeclareMathOperator*{\pro}{\mathcal P_{\Omega}}
 \DeclareMathOperator*{\pron}{\mathcal P_{\bar{\Omega}}}
+\DeclareMathOperator*{\proe}{\mathcal P_{H}}
 \newcommand{\BigO}[1]{\ensuremath{\operatorname{O}\left(#1\right)}}
 
 \begin{document}
@@ -24,6 +25,7 @@
 \maketitle
 
 \section{Introduction}
+\subsection{Classic Matrix Completion}
 
 The problem of Matrix Completion (MC) is to recover a matrix $\mathbf A$ from only a small sample of its entries. Let $\mathbf A \in \mathbb R^{m \times n}$  be the matrix we would like to know as precisely as possible while only observing a subset of its entries $(i, j) \in \Omega$. It is assumed that observed entries in $\Omega$ are uniform randomly sampled. Low-Rank Matrix Completion is a variant that assumes that $\mathbf A$ is low-rank. The tolerance for ``low'' is dependant upon the size of $\mathbf A$ and the number of sampled entries. 
 
@@ -44,7 +46,8 @@ We also define the opposite operator $\pron$, which keeps those outside $\Omega$
 where matrix $\mathbf M$ is the partially observed matrix. In practice this problem is intractable therefore we use the closest convex relaxation i.e. the nuclear norm
 \begin{align}
 \min_{\mathbf A} \; \tau \| \mathbf A \|_* \\
-\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \nonumber 
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \nonumber
+\label{classic_objective}
 \end{align}
 We also consider the case where our observed entries may contain a limited amount of noise. Our corresponding objective is the following
 \begin{align}
@@ -68,6 +71,7 @@ It has been shown \cite{cai2010singular} that the operator $\mathcal D_{\tau}(\m
 \end{align}
 The implementation of the singular value singular shrinkage operator is implemented by the function $[ \mathbf X, \mathbf s ] = \text{nn\_prox}( \mathbf Y, \tau )$, where $\mathbf s$ is the vector of the singular values of $\mathbf X$.
 
+\newpage
 \section{Function Listing}
 
 \begin{table}[!h]
@@ -76,31 +80,35 @@ The implementation of the singular value singular shrinkage operator is implemen
 
 \begin{tabular}{c | c | c}
 \hline
-Problem & Implementation & Section \\
+Problem & Function & Section \\
 \hline
 
 $\begin{array}{c} \min_{\mathbf A} \; \tau \| \mathbf A \|_* +  \frac{1}{2} \| \mathbf{ A } \|_F^2 \\
-\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \end{array}$ & Singular Value Thresholding (SVT)	& 4.1  \\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \end{array}$ & solve\_svt	& 4.1.1  \\
 \hline
 
-\multirow{2}{*}{$\begin{array}{c} \min_{\mathbf A} \; \tau \| \mathbf A \|_* \\ \text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \end{array}$} & Inexact ALM 	& 4.2 \\
-		& Linearised ALM	& 4.3 \\
-\hline
-$\begin{array}{c} \min_{\mathbf A} \; \tau \| \mathbf A \|_* + \frac{\lambda}{2} \| \pro (\mathbf E) \|_F^2 \\
-\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) + \pro (\mathbf E)\end{array}$ & Linearised ALM & 5.1 \\
+\multirow{2}{*}{$\begin{array}{c} \min_{\mathbf A} \; \tau \| \mathbf A \|_* \\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) \end{array}$} & solve\_ialm	& 4.1.2 \\
+		& solve\_lin	& 4.1.3 \\
 		
+\hline
+\multirow{3}{*}{$\begin{array}{c} \min_{\mathbf A} \; \tau \| \mathbf A \|_* + \frac{\lambda}{2} \| \pro (\mathbf E) \|_F^2 \\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) + \pro (\mathbf E)\end{array}$} & solve\_e\_lin & 4.2 \\
+	& solve\_e\_lin\_ext & \\
+	& solve\_e\_lin\_acc & \\
+
 \end{tabular}
 }}
 \end{table}
 
 \newpage
-\section{Noise-Free Implementations}
-
-\subsection{SVT}
+\section{Classic Implementations}
+\subsection{Noise Free Data}
+\subsubsection{SVT}
 
 The function
 \begin{align}
-[ \mathbf A, \mathbf{f\_values}, \mathbf{stop\_vals} ] = \text{solve\_svt}( \mathbf M, \tau, \mu, iterations, tol )
+[ \mathbf A, \mathbf{f\_values}, \mathbf{stop\_vals} ] = \text{solve\_svt}( \mathbf M, \Omega, \tau, \mu, iterations, tol )\notag 
 \end{align}
 solves the following
 \begin{align}
@@ -110,18 +118,19 @@ solves the following
 as proposed by the authors of \cite{cai2010singular}.
 
 \begin{itemize}
-\item $\mathbf M$ - matrix with observed entries and zeros for all others
+\item $\mathbf M$ - matrix with observed entries
+\item $\Omega$ - vector of constrained matrix indices
 \item $\tau$ - regularisation (optional)
 \item $\mu$ - step size (optional)
 \item $iterations$ - maximum number of iterations (optional)
 \item $tol$ - stopping criteria tolerance (optional)
 \end{itemize}
 
-\subsection{Inexact ALM}
+\subsubsection{Inexact ALM}
 
 The function
 \begin{align}
-[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_ialm}( \mathbf M, \tau, \mu, iterations, tol )
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_ialm}( \mathbf M, \Omega, \tau, \mu, iterations, tol )\notag 
 \end{align}
 solves the following
 \begin{align}
@@ -131,18 +140,19 @@ solves the following
 as proposed by the authors of \cite{lin2010augmented}.
 
 \begin{itemize}
-\item $\mathbf M$ - matrix with observed entries and zeros for all others
+\item $\mathbf M$ - matrix with observed entries
+\item $\Omega$ - vector of constrained matrix indices
 \item $\tau$ - regularisation (optional)
 \item $\mu$ - step size (optional)
 \item $iterations$ - maximum number of iterations (optional)
 \item $tol$ - stopping criteria tolerance (optional)
 \end{itemize}
 
-\subsection{Linearised ALM}
+\subsubsection{Linearised ALM}
 
 The function
 \begin{align}
-[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_lin\_alm}( \mathbf M, \tau, \mu, \rho, iterations, tol )
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_lin}( \mathbf M, \Omega, \tau, \mu, \rho, iterations, tol ) \notag 
 \end{align}
 solves the following
 \begin{align}
@@ -151,7 +161,8 @@ solves the following
 \end{align}
 
 \begin{itemize}
-\item $\mathbf M$ - matrix with observed entries and zeros for all others
+\item $\mathbf M$ - matrix with observed entries
+\item $\Omega$ - vector of constrained matrix indices
 \item $\tau$ - regularisation (optional)
 \item $\mu$ - step size (optional)
 \item $\rho$ - linearisation step size (optional)
@@ -159,16 +170,13 @@ solves the following
 \item $tol$ - stopping criteria tolerance (optional)
 \end{itemize}
 
-\newpage
-\section{Noise Inclusive Implemetations}
-
-\subsection{Linearised ALM}
+\subsection{Noisey Data}
 
 The functions
 \begin{align}
-[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_e\_lin\_alm}( \mathbf M, \tau, \lambda, \rho, iterations, tol ) \\
-[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_e\_lin\_extalm}( \mathbf M, \tau, \lambda, \rho, iterations, tol ) \\
-[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_e\_lin\_accalm}( \mathbf M, \tau, \lambda, \rho, iterations, tol )
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_e\_lin}( \mathbf M, \Omega, \tau, \lambda, \rho, iterations, tol ) \notag \\
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_e\_lin\_ext}( \mathbf M, \Omega, \tau, \lambda, \rho, iterations, tol ) \notag \\
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_e\_lin\_acc}( \mathbf M, \Omega, \tau, \lambda, \rho, iterations, tol )\notag 
 \end{align}
 solve the following
 \begin{align}
@@ -178,7 +186,8 @@ solve the following
 with increasing convergence speed based on \cite{ji2009accelerated}.
 
 \begin{itemize}
-\item $\mathbf M$ - matrix with observed entries and zeros for all others
+\item $\mathbf M$ - matrix with observed entries
+\item $\Omega$ - vector of constrained matrix indices
 \item $\tau$ - regularisation (optional)
 \item $\lambda$ - regularisation (optional)
 \item $\rho$ - linearisation step size (optional)

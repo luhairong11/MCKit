@@ -3,9 +3,9 @@ function [ A, f_vals, stop_vals ] = solve_ialm(M, omega, tau, mu, iterations, to
 %   This function solves the following problem
 %   
 %   min_A    tau * | A |_*
-%   s.t. M = A + E, P.*E = 0
+%   s.t. M = A + X, P.*X = 0
 %   
-%   E is not actually noise. Rather it is an auxillary variable
+%   X is not actually noise. Rather it is an auxillary variable
 %   to enforce the MC constraint. We expect P.*A = P.*M.
 % 
 %   The method is from
@@ -14,8 +14,12 @@ function [ A, f_vals, stop_vals ] = solve_ialm(M, omega, tau, mu, iterations, to
 % 
 %   Written by Stephen Tierney
 
+if ~exist('M', 'var')
+    error('No observation data provided.');
+end
+
 if ~exist('omega', 'var')
-    error('Aborted: no observation set provided.');
+    error('No observation set provided.');
 end
 
 if ~exist('mu', 'var')
@@ -42,29 +46,31 @@ P = zeros(size(M));
 P(omega) = 1;
 
 Y = zeros(size(M));
-E = zeros(size(M));
+X = zeros(size(M));
 R = ones(size(P)) - P;
 
 for k = 1 : iterations
 
     %% Step 1, solve for A
     
-    [A, s] = nn_prox(M - E + (1/mu)*Y, tau/mu);
+    V = P.*M - X + (1/mu)*Y;
+    
+    [A, s] = nn_prox(V, tau/mu);
     
     %% Step 2, update E
-    old_E = E;
-    E = R.*(M - A + (1/mu)*Y);
+    old_X = X;
+    X = R.*(P.*M - A + (1/mu)*Y);
     
     %% Step 3, update Y
     
-    Y = Y + mu*(M - A - E);
+    Y = Y + mu*(P.*M - A - X);
     
     %% Get function value
     f_vals(k, 1) = tau * sum(s);
     
     %% Check stopping criteria
-    stop_vals(k, 1) = norm(M - A - E, 'fro') / norm(M, 'fro');
-    stop_vals(k, 2) = min(mu, sqrt(mu)) * norm(E - old_E, 'fro') / norm(M, 'fro');
+    stop_vals(k, 1) = norm(P.*M - A - X, 'fro') / norm(M, 'fro');
+    stop_vals(k, 2) = min(mu, sqrt(mu)) * norm(X - old_X, 'fro') / norm(M, 'fro');
     
     if ( stop_vals(k, 1) <= tol && stop_vals(k, 2) <= tol)
         break;

@@ -1,5 +1,5 @@
-function [ A, f_vals ] = solve_e_lin_accalm(M, omega, tau, lambda, rho, iterations, tol)
-%SOLVE_E_LIN_ACCALM
+function [ A, f_vals ] = solve_e_lin_acc(M, omega, tau, lambda, rho, iterations, tol)
+%SOLVE_E_LIN_ACC
 %   This function solves the following problem
 %   
 %   min_A    tau * | A |_* + lambda/2 | P.*E |_F^2 
@@ -13,8 +13,12 @@ function [ A, f_vals ] = solve_e_lin_accalm(M, omega, tau, lambda, rho, iteratio
 % 
 %   Written by Stephen Tierney
 
+if ~exist('M', 'var')
+    error('No observation data provided.');
+end
+
 if ~exist('omega', 'var')
-    error('Aborted: no observation set provided.');
+    error('No observation set provided.');
 end
 
 if ~exist('tau', 'var')
@@ -57,11 +61,11 @@ for k = 1 : iterations
     searching = true;
     while( searching )
         
-        V = Z - 1/rho * (lambda * (P.*Z - M));
-        
+        partial = lambda * (P.*Z - P.*M);
+        V = Z - 1/rho * partial;
         [A, s] = nn_prox(V, tau/rho);
         
-        f_vals(k, 1) = tau * sum(s) + lambda/2 * norm(P.*A - M, 'fro')^2;
+        f_vals(k, 1) = tau * sum(s) + lambda/2 * norm(P.*A - P.*M, 'fro')^2;
         
         approx = tau * sum(s) + rho/2 * norm(A - V, 'fro')^2;
         
