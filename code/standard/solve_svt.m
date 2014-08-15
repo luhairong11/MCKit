@@ -49,7 +49,7 @@ P(omega) = 1;
 for k = 1 : iterations
 
     %% Step 1, solve for A
-    [A, s] = nn_prox(Y, tau);
+    [A, s] = solve_nn(Y, tau);
 
     %% Step 2, update Y
     Y = Y + mu * (P.*M - P.*A);

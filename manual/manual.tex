@@ -92,10 +92,15 @@ $\begin{array}{c} \min_{\mathbf A} \; \tau \| \mathbf A \|_* +  \frac{1}{2} \| \
 		& solve\_lin	& 4.1.3 \\
 		
 \hline
-\multirow{3}{*}{$\begin{array}{c} \min_{\mathbf A} \; \tau \| \mathbf A \|_* + \frac{\lambda}{2} \| \pro (\mathbf E) \|_F^2 \\
-\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) + \pro (\mathbf E)\end{array}$} & solve\_e\_lin & 4.2 \\
+\multirow{3}{*}{$\begin{array}{c} \tau \| \mathbf A \|_*  +  \frac{\lambda}{2} \| \mathbf{ \pro (A) - \pro (M)  } \|^2_F  \end{array}$}
+	& solve\_e\_lin & 4.2 \\
 	& solve\_e\_lin\_ext & \\
 	& solve\_e\_lin\_acc & \\
+\hline
+
+$\begin{array}{c} \min_{\mathbf{A,E}} \; \tau \| \mathbf A \|_* + \frac{\lambda}{2} \| \pro (\mathbf E) \|_F^2\\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) + \pro (\mathbf E) \end{array}$ & solve\_e\_exact	& 4.3  \\
+\hline
 
 \end{tabular}
 }}
@@ -170,7 +175,7 @@ solves the following
 \item $tol$ - stopping criteria tolerance (optional)
 \end{itemize}
 
-\subsection{Noisey Data}
+\subsection{Noisey Data Relaxation}
 
 The functions
 \begin{align}
@@ -180,8 +185,7 @@ The functions
 \end{align}
 solve the following
 \begin{align}
-\min_{\mathbf A} \; \tau \| \mathbf A \|_* + \frac{\lambda}{2} \| \pro (\mathbf E) \|_F^2\\
-\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) + \pro (\mathbf E) \nonumber 
+\min_{\mathbf A} \; \tau \| \mathbf A \|_*  +  \frac{\lambda}{2} \| \mathbf{ \pro (A) - \pro (M)  } \|^2_F 
 \end{align}
 with increasing convergence speed based on \cite{ji2009accelerated}.
 
@@ -194,6 +198,30 @@ with increasing convergence speed based on \cite{ji2009accelerated}.
 \item $iterations$ - maximum number of iterations (optional)
 \item $tol$ - stopping criteria tolerance (optional)
 \end{itemize}
+
+\subsection{Noisey Data Exact}
+
+The function
+\begin{align}
+[ \mathbf A, \mathbf{f\_vals}, \mathbf{stop\_vals} ] = \text{solve\_e\_exact}( \mathbf M, \Omega, \tau, \lambda, \rho, iterations, tol ) \notag
+\end{align}
+solve the following
+\begin{align}
+\min_{\mathbf A} \; \tau \| \mathbf A \|_* + \frac{\lambda}{2} \| \pro (\mathbf E) \|_F^2\\
+\text{s.t.} \; \pro (\mathbf M) = \pro (\mathbf A) + \pro (\mathbf E) \nonumber 
+\end{align}
+
+\begin{itemize}
+\item $\mathbf M$ - matrix with observed entries
+\item $\Omega$ - vector of constrained matrix indices
+\item $\tau$ - regularisation (optional)
+\item $\lambda$ - regularisation (optional)
+\item $\rho$ - linearisation step size (optional)
+\item $iterations$ - maximum number of iterations (optional)
+\item $tol$ - stopping criteria tolerance (optional)
+\end{itemize}
+
+
 
 \newpage
 \bibliographystyle{plain}

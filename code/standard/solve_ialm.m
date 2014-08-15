@@ -55,7 +55,7 @@ for k = 1 : iterations
     
     V = P.*M - X + (1/mu)*Y;
     
-    [A, s] = nn_prox(V, tau/mu);
+    [A, s] = solve_nn(V, tau/mu);
     
     %% Step 2, update E
     old_X = X;
