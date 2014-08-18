@@ -53,11 +53,11 @@ Y = zeros(size(M));
 for k = 1 : iterations
     
     %% Take a step
-    partial = mu * (P.*A - (P.*M - 1/mu * Y));
+    partial = (P.*A - (P.*M - 1/mu * Y));
     
     V = A - 1/rho * partial;
     
-    [A, s] = solve_nn(V, tau/rho);
+    [A, s] = solve_nn(V, tau/(mu*rho));
     
     %% Step 2, update Y
     Y = Y + mu * (P.*A - P.*M);

@@ -57,15 +57,15 @@ for k = 1 : iterations
     
     searching = true;
     while( searching )
-        
-        partial = lambda * (P.*A_prev - P.*M);
+         
+        partial = (P.*A_prev - P.*M);
         V = A_prev - 1/rho * partial;
         
-        [A, s] = solve_nn(V, tau/rho);
+        [A, s] = solve_nn(V, tau/(rho*lambda));
         
         f_vals(k, 1) = tau * sum(s) + lambda/2 * norm(P.*A - P.*M, 'fro')^2;
-        
-        approx = tau * sum(s) + rho/2 * norm(A - V, 'fro')^2;
+
+        approx = tau * sum(s) + (rho*lambda)/2 * norm(A - V, 'fro')^2;
         
         if ( f_vals(k, 1) > approx)
             rho = gamma * rho;

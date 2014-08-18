@@ -20,7 +20,7 @@ A_noisey = A + (0.05 * randn(size(A)));
 M = zeros(size(A));
 M(omega) = A_noisey(omega);
 
-tic; [X, f_vals] = solve_e_lin_ext(M, omega, 3, 1.5); toc;
+tic; [X, f_vals] = solve_e_lin_ext(M, omega, 3, 1); toc;
 
 rmpath(paths);
 
