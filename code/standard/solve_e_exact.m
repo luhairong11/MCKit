@@ -56,11 +56,11 @@ mu = 1;
 for k = 1 : iterations
     
     % Update A
-    partial = mu * (P.*A + P.*E - P.*M + 1/mu * Y);
+    partial = (P.*A + P.*E - P.*M + 1/mu * Y);
     
     V = A - 1/rho * partial;
     
-    [A, s] = solve_nn(V, tau/rho);
+    [A, s] = solve_nn(V, tau/(rho*mu));
     
     % Update E
     

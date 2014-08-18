@@ -52,11 +52,11 @@ A = zeros(size(M));
 for k = 1 : iterations
     
     %% Take a step
-    partial = lambda * (P.*A - P.*M);
+    partial = (P.*A - P.*M);
     
     V = A - 1/rho * partial;
     
-    [A, s] = solve_nn(V, tau/rho);
+    [A, s] = solve_nn(V, tau/(rho*lambda));
     
     %% Check function value
     f_vals(k, 1) = tau * sum(s) + lambda/2 * norm(P.*A - P.*M, 'fro')^2;
